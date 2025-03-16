@@ -1,7 +1,10 @@
 package tests;
 
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.testng.annotations.*;
 import pages.BurgerMenuPage;
@@ -23,22 +26,41 @@ public class BaseTest {
     ProductsPage productsPage;
     CartPage cartPage;
 
-
+    @Parameters({"browser"})
     @BeforeMethod
-    public void setup() throws MalformedURLException {
-        ChromeOptions options = new ChromeOptions();
-        options.setCapability("selenoid:options", new HashMap<String, Object>() {{
-            put("name", "Test badge...");
-            put("sessionTimeout", "15m");
-            put("env", new ArrayList<String>() {{
-                add("TZ=UTC");
+    public void setup(@Optional("chrome") String browser) throws MalformedURLException {
+        if(browser.equalsIgnoreCase("chrome")){
+            ChromeOptions options = new ChromeOptions();
+            options.setCapability("selenoid:options", new HashMap<String, Object>() {{
+                put("name", "Test badge...");
+                put("sessionTimeout", "15m");
+                put("env", new ArrayList<String>() {{
+                    add("TZ=UTC");
+                }});
+                put("labels", new HashMap<String, Object>() {{
+                    put("manual", "true");
+                }});
+                put("enableVideo", true);
             }});
-            put("labels", new HashMap<String, Object>() {{
-                put("manual", "true");
+            driver = new RemoteWebDriver(new URL("http://localhost:4444/wd/hub"), options);
+        }
+        if(browser.equalsIgnoreCase("firefox")){
+            FirefoxOptions options = new FirefoxOptions();
+            options.setCapability("selenoid:options", new HashMap<String, Object>() {{
+                put("name", "Test badge...");
+                put("sessionTimeout", "15m");
+                put("env", new ArrayList<String>() {{
+                    add("TZ=UTC");
+                }});
+                put("labels", new HashMap<String, Object>() {{
+                    put("manual", "true");
+                }});
+                put("enableVideo", true);
             }});
-            put("enableVideo", true);
-        }});
-        driver = new RemoteWebDriver(new URL("http://localhost:4444/wd/hub"), options);
+             driver = new RemoteWebDriver(new URL("http://localhost:4444/wd/hub"), options);
+        }
+
+
         loginPage = new LoginPage(driver);
         burgerMenuPage = new BurgerMenuPage(driver);
         productsPage = new ProductsPage(driver);
