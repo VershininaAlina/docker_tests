@@ -1,22 +1,21 @@
 package tests;
 
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.firefox.FirefoxOptions;
-import org.testng.ITest;
-import org.testng.ITestResult;
+import org.openqa.selenium.remote.RemoteWebDriver;
 import org.testng.annotations.*;
 import pages.BurgerMenuPage;
 import pages.CartPage;
 import pages.LoginPage;
 import pages.ProductsPage;
-import utils.AllureUtils;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
 
-import static utils.AllureUtils.takeScreenshot;
 
 @Listeners(TestListener.class)
+
 public class BaseTest {
     WebDriver driver;
     LoginPage loginPage;
@@ -24,20 +23,22 @@ public class BaseTest {
     ProductsPage productsPage;
     CartPage cartPage;
 
-    @Parameters({"browser"})
+
     @BeforeMethod
-    public void setup(@Optional("chrome") String browser) {
-        if(browser.equalsIgnoreCase("chrome")){
-            ChromeOptions options = new ChromeOptions();
-            options.addArguments("--start-maximized");
-            options.addArguments("--headless");
-            driver = new ChromeDriver(options);
-        }
-        if(browser.equalsIgnoreCase("firefox")){
-            FirefoxOptions options = new FirefoxOptions();
-            options.addArguments("start-maximized");
-            driver = new FirefoxDriver(options);
-        }
+    public void setup() throws MalformedURLException {
+        ChromeOptions options = new ChromeOptions();
+        options.setCapability("selenoid:options", new HashMap<String, Object>() {{
+            put("name", "Test badge...");
+            put("sessionTimeout", "15m");
+            put("env", new ArrayList<String>() {{
+                add("TZ=UTC");
+            }});
+            put("labels", new HashMap<String, Object>() {{
+                put("manual", "true");
+            }});
+            put("enableVideo", true);
+        }});
+        driver = new RemoteWebDriver(new URL("http://localhost:4444/wd/hub"), options);
         loginPage = new LoginPage(driver);
         burgerMenuPage = new BurgerMenuPage(driver);
         productsPage = new ProductsPage(driver);
@@ -45,10 +46,9 @@ public class BaseTest {
     }
 
     @AfterMethod(alwaysRun = true)
-    public void tearDown(ITestResult result) {
-        if(ITestResult.FAILURE == result.getStatus()){
-            AllureUtils.takeScreenshot(driver);
+    public void tearDown() {
+        if (driver != null) {
+            driver.quit();
         }
-        driver.quit();
     }
 }
